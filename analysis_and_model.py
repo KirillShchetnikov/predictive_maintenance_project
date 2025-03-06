@@ -10,7 +10,6 @@ from xgboost import XGBClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report, roc_curve, roc_auc_score
 from sklearn.preprocessing import LabelEncoder
 
-
 def analysis_and_model_page():
     st.title("Анализ данных и модель")
 
@@ -97,18 +96,18 @@ def analysis_and_model_page():
         fig, ax = plt.subplots()
         for name, (fpr, tpr, roc_auc) in roc_data.items():
             ax.plot(fpr, tpr, label=f"{name} (AUC = {roc_auc:.2f})")
-        # ax.plot([0, 1], [0, 1], linestyle='--', color='gray', label='Random Guess')
+        ax.plot([0, 1], [0, 1], linestyle='--', color='gray', label='Random Guess')
         ax.set_xlabel('Доля ложноположительных предсказаний')
         ax.set_ylabel('Доля истинноположительных предсказаний')
         ax.set_title('ROC-кривые для всех моделей')
         ax.legend()
         st.pyplot(fig)
 
-        # Интерфейс для предсказания
-        st.header("Предсказание по новым данным")
+        # Интерфейс для предсказания (только для XGBoost)
+        st.header("Предсказание по новым данным (XGBoost)")
         with st.form("prediction_form"):
             st.write("Введите значения признаков для предсказания:")
-            air_temp = st.number_input("Air temperature (K)", value=300.0)  # Убраны скобки
+            air_temp = st.number_input("Air temperature (K)", value=300.0)
             process_temp = st.number_input("Process temperature (K)", value=310.0)
             rotational_speed = st.number_input("Rotational speed (rpm)", value=1500)
             torque = st.number_input("Torque (Nm)", value=40.0)
@@ -120,7 +119,7 @@ def analysis_and_model_page():
             if submit_button:
                 input_data = pd.DataFrame({
                     'Type': [type_encoded],
-                    'Air_temperature_K': [air_temp],  # Новые имена без скобок
+                    'Air_temperature_K': [air_temp],
                     'Process_temperature_K': [process_temp],
                     'Rotational_speed_rpm': [rotational_speed],
                     'Torque_Nm': [torque],
@@ -128,14 +127,12 @@ def analysis_and_model_page():
                 })
                 input_data = input_data[X.columns]  # Упорядочиваем столбцы
 
-                # Предсказание для каждой модели
-                st.subheader("Результаты предсказания")
-                for name, model in models.items():
-                    prediction = model.predict(input_data)
-                    prediction_proba = model.predict_proba(input_data)[:, 1]
-                    st.write(f"{name}:")
-                    st.write(f"Предсказание: {prediction[0]}")
-                    st.write(f"Вероятность отказа: {prediction_proba[0]:.2f}")
-
+                # Предсказание только для XGBoost
+                xgb_model = models["XGBoost"]
+                prediction = xgb_model.predict(input_data)
+                prediction_proba = xgb_model.predict_proba(input_data)[:, 1]
+                st.subheader("Результаты предсказания (XGBoost)")
+                st.write(f"Предсказание: {prediction[0]}")
+                st.write(f"Вероятность отказа: {prediction_proba[0]:.2f}")
 
 analysis_and_model_page()
